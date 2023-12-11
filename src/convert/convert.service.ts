@@ -13,14 +13,25 @@ import {
 } from './convert.model';
 import { CustomOkxResponse } from 'src/utils/abstract';
 import { CustomError } from 'src/utils/error/customError';
+import { ConvertRequest } from './convert.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class ConvertService {
   _init(): void {}
-  apiConfiguration: ApiConfiguration;
-  constructor(apiConfiguration: ApiConfiguration) {
-    this.apiConfiguration = apiConfiguration;
+  constructor(
+    @InjectModel(ConvertRequest.name)
+    private convertModel: Model<ConvertRequest>,
+  ) {
+    this.convertModel = convertModel;
   }
+
+  apiConfiguration: ApiConfiguration = {
+    apiKey: '328f1b3a-ade9-47e1-a90e-48c534884bc8',
+    passphrase: 'G67O!b#AbOsT530C3e8FBg6g',
+    secretKey: '6E9D31BA87D0265F444D68E9B7C3DEB1',
+  };
 
   async convertCurrencyPair(
     body: ConvertPairModel,
@@ -57,16 +68,38 @@ export class ConvertService {
   async convertTrade(
     body: ConvertTradeModel,
   ): Promise<PostConvertTradeResponse[]> {
-    return await new OkxConvertService(this.apiConfiguration)
-      .postConvertTrade(body)
-      .then((response: CustomOkxResponse<PostConvertTradeResponse>) => {
-        if (response.status === 200) {
-          return response.data;
-        }
-        throw new CustomError(response.message, response.code, response.status);
-      })
-      .catch((err) => {
-        throw new CustomError(err.message, err.code, err.status);
-      });
+    const convertRequest: PostConvertTradeResponse[] =
+      await new OkxConvertService(this.apiConfiguration)
+        .postConvertTrade(body)
+        .then((response: CustomOkxResponse<PostConvertTradeResponse>) => {
+          if (response.status === 200) {
+            return response.data;
+          }
+          throw new CustomError(
+            response.message,
+            response.code,
+            response.status,
+          );
+        })
+        .catch((err) => {
+          throw new CustomError(err.message, err.code, err.status);
+        });
+
+    let updatedData = convertRequest.map((item) => {
+      return {
+        _id: item.tradeId,
+        ...item,
+      };
+    });
+
+    this.convertModel.create(updatedData);
+
+    let document: ConvertRequest = await this.convertModel.findOne({
+      _id: convertRequest[0].tradeId,
+    });
+
+    return this.convertModel.find(document);
   }
+
+  async allConvertRequest
 }

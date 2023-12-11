@@ -6,10 +6,15 @@ import {
 } from '@nestjs/common';
 import { AppMiddleware } from './middleware';
 import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 import { ConvertModule } from './convert/convert.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), ConvertModule],
+  imports: [
+    ConvertModule,
+    ConfigModule.forRoot(),
+    MongooseModule.forRoot(process.env.MONGO_URI),
+  ],
   controllers: [],
   providers: [],
 })
