@@ -100,6 +100,4 @@ export class ConvertService {
 
     return this.convertModel.find(document);
   }
-
-  async allConvertRequest
 }
