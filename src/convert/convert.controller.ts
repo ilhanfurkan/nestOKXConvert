@@ -1,4 +1,4 @@
-import { Body, Post, Controller, Res } from '@nestjs/common';
+import { Body, Post, Controller, Res, Req } from '@nestjs/common';
 import { ConvertService } from './convert.service';
 import { Response } from 'express';
 import { CustomResponse } from 'src/utils/response/response';
@@ -13,7 +13,7 @@ import {
   ConvertTradeModel,
 } from './convert.model';
 
-@Controller('api/convert/')
+@Controller('api/convert')
 export class ConvertController {
   private readonly response: CustomResponse;
   constructor(private readonly convertService: ConvertService) {
@@ -23,11 +23,14 @@ export class ConvertController {
 
   @Post('currency-pair')
   async convertCurrencyPair(
+    @Req() req: Request,
     @Res() res: Response,
     @Body() body: ConvertPairModel,
   ): Promise<Response> {
+    const apiConfiguration = req['apiConfiguration'];
+
     return await this.convertService
-      .convertCurrencyPair(body)
+      .convertCurrencyPair(body, apiConfiguration)
       .then((currencyPairResponse) => {
         return this.response.successResponse<GetConvertCurrencyPairResponse[]>(
           res,
@@ -41,11 +44,14 @@ export class ConvertController {
 
   @Post('estimate-quote')
   async convertEstimateQuote(
+    @Req() req: Request,
     @Res() res: Response,
     @Body() body: ConvertEstimateQuoteModel,
   ): Promise<Response> {
+    const apiConfiguration = req['apiConfiguration'];
+
     return await this.convertService
-      .convertEstimateQuote(body)
+      .convertEstimateQuote(body, apiConfiguration)
       .then((estimateQuoteResponse) => {
         return this.response.successResponse<
           PostConvertEstimateQuoteResponse[]
@@ -58,11 +64,14 @@ export class ConvertController {
 
   @Post('trade')
   async convertTrade(
+    @Req() req: Request,
     @Res() res: Response,
     @Body() body: ConvertTradeModel,
   ): Promise<Response> {
+    const authorizedUser = req['authorizedUser'];
+    const apiConfiguration = req['apiConfiguration'];
     return await this.convertService
-      .convertTrade(body)
+      .convertTrade(body, apiConfiguration, authorizedUser)
       .then((tradeResponse) => {
         return this.response.successResponse<PostConvertTradeResponse[]>(
           res,

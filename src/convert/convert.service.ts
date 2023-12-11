@@ -11,7 +11,7 @@ import {
   ConvertPairModel,
   ConvertTradeModel,
 } from './convert.model';
-import { CustomOkxResponse } from 'src/utils/abstract';
+import { AuthorizedUser, CustomOkxResponse } from 'src/utils/abstract';
 import { CustomError } from 'src/utils/error/customError';
 import { ConvertRequest } from './convert.schema';
 import { InjectModel } from '@nestjs/mongoose';
@@ -27,16 +27,11 @@ export class ConvertService {
     this.convertModel = convertModel;
   }
 
-  apiConfiguration: ApiConfiguration = {
-    apiKey: '328f1b3a-ade9-47e1-a90e-48c534884bc8',
-    passphrase: 'G67O!b#AbOsT530C3e8FBg6g',
-    secretKey: '6E9D31BA87D0265F444D68E9B7C3DEB1',
-  };
-
   async convertCurrencyPair(
     body: ConvertPairModel,
+    apiConfiguration: ApiConfiguration,
   ): Promise<GetConvertCurrencyPairResponse[]> {
-    return await new OkxConvertService(this.apiConfiguration)
+    return await new OkxConvertService(apiConfiguration)
       .getConvertCurrencyPair(body)
       .then((response: CustomOkxResponse<GetConvertCurrencyPairResponse>) => {
         if (response.status === 200) {
@@ -51,8 +46,9 @@ export class ConvertService {
 
   async convertEstimateQuote(
     body: ConvertEstimateQuoteModel,
+    apiConfiguration: ApiConfiguration,
   ): Promise<PostConvertEstimateQuoteResponse[]> {
-    return await new OkxConvertService(this.apiConfiguration)
+    return await new OkxConvertService(apiConfiguration)
       .postConvertEstimateQuote(body)
       .then((response: CustomOkxResponse<PostConvertEstimateQuoteResponse>) => {
         if (response.status === 200) {
@@ -67,9 +63,11 @@ export class ConvertService {
 
   async convertTrade(
     body: ConvertTradeModel,
+    apiConfiguration: ApiConfiguration,
+    authorizedUser: AuthorizedUser,
   ): Promise<PostConvertTradeResponse[]> {
     const convertRequest: PostConvertTradeResponse[] =
-      await new OkxConvertService(this.apiConfiguration)
+      await new OkxConvertService(apiConfiguration)
         .postConvertTrade(body)
         .then((response: CustomOkxResponse<PostConvertTradeResponse>) => {
           if (response.status === 200) {
@@ -88,16 +86,18 @@ export class ConvertService {
     let updatedData = convertRequest.map((item) => {
       return {
         _id: item.tradeId,
+        customerId: authorizedUser.id,
+        subAccount: authorizedUser.subAccount,
         ...item,
       };
     });
 
-    this.convertModel.create(updatedData);
+    await this.convertModel.create(updatedData);
 
-    let document: ConvertRequest = await this.convertModel.findOne({
+    const document: ConvertRequest = await this.convertModel.findOne({
       _id: convertRequest[0].tradeId,
     });
 
-    return this.convertModel.find(document);
+    return [document];
   }
 }

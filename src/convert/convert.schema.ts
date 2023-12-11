@@ -1,10 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { SideType } from './convert.abstract';
+import { ConvertHistoryState, SideType } from './convert.abstract';
 
 @Schema()
 export class ConvertRequest {
   @Prop()
   _id: string;
+
+  @Prop()
+  customerId: string;
+
+  @Prop()
+  subAccount: string;
 
   @Prop()
   tradeId: string;
@@ -15,8 +21,8 @@ export class ConvertRequest {
   @Prop()
   clTReqId: string;
 
-  @Prop()
-  state: string;
+  @Prop({ type: String, enum: ConvertHistoryState })
+  state: ConvertHistoryState;
 
   @Prop()
   instId: string;
@@ -28,7 +34,7 @@ export class ConvertRequest {
   quoteCcy: string;
 
   @Prop({ type: String, enum: SideType })
-  side: string;
+  side: SideType;
 
   @Prop()
   fillPx: string;
