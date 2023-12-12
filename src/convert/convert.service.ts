@@ -40,7 +40,7 @@ export class ConvertService {
         throw new CustomError(response.message, response.code, response.status);
       })
       .catch((err) => {
-        throw new CustomError(err.message, err.code, err.status);
+        throw new CustomError(err.message, err.code, err.httpStatus);
       });
   }
 
@@ -57,7 +57,7 @@ export class ConvertService {
         throw new CustomError(response.message, response.code, response.status);
       })
       .catch((err) => {
-        throw new CustomError(err.message, err.code, err.status);
+        throw new CustomError(err.message, err.code, err.httpStatus);
       });
   }
 
@@ -80,7 +80,7 @@ export class ConvertService {
           );
         })
         .catch((err) => {
-          throw new CustomError(err.message, err.code, err.status);
+          throw new CustomError(err.message, err.code, err.httpStatus);
         });
 
     let updatedData = convertRequest.map((item) => {
