@@ -22,3 +22,9 @@ export interface RedisSession {
   apiConfiguration: string;
   user: string;
 }
+
+export interface DecodedJwt {
+  email: string;
+  iat: number;
+  exp: number;
+}
