@@ -3,7 +3,8 @@ import { Request, Response, NextFunction } from 'express';
 import { ExceptionMessages } from './utils/error/exceptionMessages';
 import { CustomResponse } from './utils/response/response';
 import { createClient } from 'redis';
-import { RedisSession } from './utils/abstract';
+import { DecodedJwt, RedisSession } from './utils/abstract';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AppMiddleware implements NestMiddleware {
@@ -49,6 +50,13 @@ export class AppMiddleware implements NestMiddleware {
 
     if (sessionKeys && sessionKeys.length > 0) {
       const isTokenValid = sessionKeys.includes(token);
+      const jwtService = new JwtService();
+      const decodedJwt: DecodedJwt = jwtService.decode(token);
+      const expirationDate: Date = new Date(decodedJwt.exp * 1000);
+
+      if (expirationDate <= new Date()) {
+        throw ExceptionMessages.InvalidToken;
+      }
 
       if (isTokenValid) {
         const sessionData = await client.hGetAll(`redis_session:${token}`);
